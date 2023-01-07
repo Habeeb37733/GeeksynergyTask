@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
+import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -6,10 +8,10 @@ import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
 
+
+
 import 'companyinfo.dart';
-import 'model.dart';
-import 'model.dart';
-import 'model.dart';
+
 
 class ComingDatas extends StatefulWidget {
   String? name;
@@ -32,11 +34,12 @@ class ComingDatasState extends State<ComingDatas> {
   Future<Map<String, dynamic>> _fetchData() async {
     String  apiEndpoint= "https://hoblist.com/api/movieList";
     final Uri url = Uri.parse(apiEndpoint);
+
     Map<String, String> body = {
-      "category": "movies",
-      "language": "kannada",
-      "genre": "all",
-      "sort": "voting"
+      'category': 'movies',
+      'language': 'kannada',
+      'genre': 'all',
+      'sort': 'voting',
     };
 
     http.Response response = await http.post(
@@ -48,19 +51,19 @@ class ComingDatasState extends State<ComingDatas> {
 
 
 
+
     if (response.statusCode == 200) {
-      // If the server returned a 200 OK response,
-      // then parse the JSON data
       print(response.statusCode);
-      return json.decode(response.body);
+      //print(response.body);
+
+       return json.decode(response.body);
+
 
     } else {
-      // If the server did not return a 200 OK response,
-      // then throw an exception.
+
       throw Exception('Failed to fetch data');
     }
   }
-
 
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,24 +82,28 @@ class ComingDatasState extends State<ComingDatas> {
           ),
         ]),
       ),
-      body: FutureBuilder<Map<String, dynamic>>(
+      body:
+
+      FutureBuilder<Map<String, dynamic>>(
         future: _fetchData(),
         builder: (context, snapshot) {
 
           if (snapshot.hasData) {
 
 
-           print((snapshot.data));
+
            return ListView.builder(
-             itemCount: snapshot.data!.length,
-               itemBuilder: (context,i){
+             itemCount: snapshot.data!['result'].length,
+               itemBuilder: (BuildContext context,i){
                  Map<String, dynamic> movie = snapshot.data!['result'][i];
+               print(movie);
                  String mov=jsonEncode(movie);
-                 var move=mov.toString();
+                //print(movie);
                  int timestamp = int.parse(movie['releasedDate'].toString());
                  DateTime date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
                  String formattedDate = DateFormat.yMMMMd().format(date);
                return ListTile(
+                 dense: false,
                 leading: SizedBox(
                     height: double.infinity,
                     child: Image.network(movie['poster'].toString())),
@@ -109,15 +116,26 @@ class ComingDatasState extends State<ComingDatas> {
                    ],
                  ),
                 trailing: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.arrow_drop_up,
-                      color: Colors.black,
+                    Expanded(
+                      child: Icon(
+                          Icons.arrow_drop_up,
+                          color: Colors.black,
 
+                        ),
                     ),
-                    Text(movie['voting'].toString()),
 
-                    Text("voting"),
+                    Expanded(child: Text(movie['voting'].toString())),
+                    Expanded(
+                      child: Icon(
+                        Icons.arrow_drop_down,
+                        color: Colors.black,
+
+                      ),
+                    ),
+
+                    Expanded(child: Text("voting",style: TextStyle(fontSize: 8),)),
 
 
                   ],
@@ -176,7 +194,7 @@ class ComingDatasState extends State<ComingDatas> {
             return Text("${snapshot.error}");
           }
           // By default, show a loading spinner
-          return CircularProgressIndicator();
+          return Center(child: CircularProgressIndicator());
         },
       ),
     );
