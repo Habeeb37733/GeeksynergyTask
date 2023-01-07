@@ -10,7 +10,6 @@ class cmpnyinfo extends StatelessWidget {
       body:Padding(
         padding: const EdgeInsets.only(top: 200,left: 8),
         child: Column(
-
           children: [
             Row(
               children: [

@@ -1,91 +1,77 @@
+import 'dart:convert';
+import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/http.dart';
 
 import 'companyinfo.dart';
+import 'model.dart';
+import 'model.dart';
+import 'model.dart';
 
 class ComingDatas extends StatefulWidget {
   String? name;
   String? email;
   String? password;
   ComingDatas({this.name, this.email, this.password});
+  final String title = "Movie List";
   @override
   State<StatefulWidget> createState() {
     return ComingDatasState(name: name, email: email, password: password);
   }
 }
-
+//String apiUrl = 'https://hoblist.com/api/movieList';
 class ComingDatasState extends State<ComingDatas> {
   String? name;
   String? email;
   String? password;
   ComingDatasState({this.name, this.email, this.password});
+  List? data;
+  Future<Map<String, dynamic>> _fetchData() async {
+    String  apiEndpoint= "https://hoblist.com/api/movieList";
+    final Uri url = Uri.parse(apiEndpoint);
+    Map<String, String> body = {
+      "category": "movies",
+      "language": "kannada",
+      "genre": "all",
+      "sort": "voting"
+    };
 
-   postdata() async{
-    try {
-      var response = await http
-          .post(Uri.parse('https://hoblist.com/api/movieList'), body: {
-        "id": 1.toString(),
-        "Name": "Kantara",
-        "Category": "Movies",
-        "Language": "Kannada",
-        "Genre": "All",
-        "Sort": "Voting",
-      });
-      print(response.body);
+    http.Response response = await http.post(
+        url,
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: body
+    );
+
+
+
+
+    if (response.statusCode == 200) {
+      // If the server returned a 200 OK response,
+      // then parse the JSON data
       print(response.statusCode);
-    } catch (e) {
-      print(e);
-    }
-    try{
-      var response2 =await http.post(
-          Uri.parse('https://hoblist.com/api/movieList'),
-          body: {
-            "id":1.toString(),
-            "Name":"KGF",
-            "Category":"Movies",
-            "Language" : "Kannada",
-            "Genre" : "All",
-            "Sort" : "Voting",
-          }
+      return json.decode(response.body);
 
-      );
-      print(response2.body);
-      print(response2.statusCode);
-    }catch(e){
-      print(e);
-    }
-    try{
-      var response3 =await http.post(
-          Uri.parse('https://hoblist.com/api/movieList'),
-          body: {
-            "id":1.toString(),
-            "Name":"KGF",
-            "Category":"Movies",
-            "Language" : "Kannada",
-            "Genre" : "All",
-            "Sort" : "Voting",
-          }
-
-      );
-      print(response3.body);
-      print(response3.statusCode);
-    }catch(e){
-      print(e);
+    } else {
+      // If the server did not return a 200 OK response,
+      // then throw an exception.
+      throw Exception('Failed to fetch data');
     }
   }
-  @override
+
+
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Movie List"),
+        title: Text(widget.title),
       ),
       drawer: Drawer(
         child: ListView(children: [
           ListTile(
             title: Text("Company Info",
-            style: TextStyle(fontWeight: FontWeight.w700,),),
+              style: TextStyle(fontWeight: FontWeight.w700,),),
             onTap: ()=> Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const cmpnyinfo()),
@@ -93,147 +79,106 @@ class ComingDatasState extends State<ComingDatas> {
           ),
         ]),
       ),
-      body: ListView(
-    children: [
-      Card(
-        child: ListTile(
-          title: Text("Kantara"),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(right: 160),
-            child: Column(
-              children: [
-                Row(
-                  children: [Text("Category:"),
-                    Text("Movies"),],
-                ),
-                Row(
-                  children: [Text("Language:"),
-                    Text("Kannada"),],
-                ),
-                Row(
-                  children: [Text("Genre:"),
-                    Text("All"),],
-                ),
-                Row(
-                  children: [Text("Sort:"),
-                    Text("Voting"),],
-                ),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _fetchData(),
+        builder: (context, snapshot) {
 
-                Container(
-                  width:300,
-                  child: ElevatedButton(onPressed: (){},
-                      child:Text("Watch Trailer")),
-                ),
-              ],
+          if (snapshot.hasData) {
 
-            ),
-          ),
-          leading: Container(
-            //  width: 100,
-              child:
 
-          Image(image: AssetImage("assets/images/movie3.jpg"),)),
+           print((snapshot.data));
+           return ListView.builder(
+             itemCount: snapshot.data!.length,
+               itemBuilder: (context,i){
+                 Map<String, dynamic> movie = snapshot.data!['result'][i];
+                 String mov=jsonEncode(movie);
+                 var move=mov.toString();
+                 int timestamp = int.parse(movie['releasedDate'].toString());
+                 DateTime date = DateTime.fromMillisecondsSinceEpoch(timestamp * 1000);
+                 String formattedDate = DateFormat.yMMMMd().format(date);
+               return ListTile(
+                leading: SizedBox(
+                    height: double.infinity,
+                    child: Image.network(movie['poster'].toString())),
+                 title: Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     Text(movie['title'],style: TextStyle(
+                       fontWeight: FontWeight.bold,
+                     ),),
+                   ],
+                 ),
+                trailing: Column(
+                  children: [
+                    Icon(
+                      Icons.arrow_drop_up,
+                      color: Colors.black,
 
-        ),
-      ),
+                    ),
+                    Text(movie['voting'].toString()),
 
-      Card(
-        child: ListTile(
-          title: Text("KGF"),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(right: 160),
-            child: Column(
-              children: [
-                Row(
-                  children: [Text("Category:"),
-                    Text("Movies"),],
-                ),
-                Row(
-                  children: [Text("Language:"),
-                    Text("Kannada"),],
-                ),
-                Row(
-                  children: [Text("Genre:"),
-                    Text("All"),
+                    Text("voting"),
 
 
                   ],
                 ),
-                Row(
-                  children: [Text("Sort:"),
-                    Text("Voting"),],
-                ),
+                 subtitle: Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     RichText(
+                       text: TextSpan(
+                         style: DefaultTextStyle.of(context).style,
+                         children: [
+                           TextSpan(text: 'Genre: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                           TextSpan(text:movie['genre'] ),
+                         ],
+                       ),
+                     ),
+                     RichText(text: TextSpan(
+                       style: DefaultTextStyle.of(context).style,
+                       children: [
+                         TextSpan(text: 'Director: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                         TextSpan(text:movie['director'].toString()  ),
 
-                Container(
-                  width:300,
-                  child: ElevatedButton(onPressed: (){},
-                      child:Text("Watch Trailer")),
-                ),
-              ],
-            ),
-          ),
-          leading: Container(
-              width: 55,
-              child:
 
-              Image(image: AssetImage("assets/images/movie22.jpg"),)),
+                       ]
+                     )),
+                     RichText(text: TextSpan(
+                       style: DefaultTextStyle.of(context).style,
+                       children: [
+                         TextSpan(text: 'Starring: ', style: TextStyle(fontWeight: FontWeight.bold)),
+                         TextSpan(text:movie['stars'].toString()  ),
 
-        ),
+                       ],
+                     )),
+                     RichText(text: TextSpan(
+                       style: DefaultTextStyle.of(context).style,
+                       children: [
+                         TextSpan(text:movie['runTime'].toString()  ),
+                         TextSpan(text: ' | '),
+                         TextSpan(text:movie['language'].toString()  ),
+                         TextSpan(text: ' | '),
+                         TextSpan(text:formattedDate.toString()  ),
+
+                       ]
+                     )),
+                   SizedBox(
+                       width: double.infinity,
+                       child: ElevatedButton(onPressed: (){}, child: Text("Watch Trailer"))),
+                   ],
+                 ),
+
+
+               );
+               }
+                );
+          } else if (snapshot.hasError) {
+            return Text("${snapshot.error}");
+          }
+          // By default, show a loading spinner
+          return CircularProgressIndicator();
+        },
       ),
-      Card(
-        child: ListTile(
-          title: Text("Maya"),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(right: 160),
-            child: Column(
-              children: [
-                Row(
-                  children: [Text("Category:"),
-                    Text("Movies"),],
-                ),
-                Row(
-                  children: [Text("Language:"),
-                    Text("Kannada"),],
-                ),
-                Row(
-                  children: [Text("Genre:"),
-                    Text("All"),
-
-
-                  ],
-
-                ),
-                Row(
-                  children: [Text("Sort:"),
-                    Text("Voting"),],
-                ),
-
-                Container(
-                  width:300,
-                  child: ElevatedButton(onPressed: (){},
-                      child:Text("Watch Trailer")),
-                ),
-              ],
-            ),
-          ),
-          leading: Container(
-             width: 55,
-              child:
-
-              Image(image: AssetImage("assets/images/movie4.jpg"),)),
-
-        ),
-      ),
-
-ElevatedButton(onPressed: postdata, child: Text("Send Data"))
-    ],
-    ),
-
-
-                     //  child: Image(image: AssetImage("assets/images/movie3.jpg",
-
-
-      
     );
   }
 }
